@@ -1,73 +1,60 @@
-pipeline {
-    agent any
-
-    stages {
+node {
+    try {
 
         stage('Build') {
-            steps {
-                sh '''
-                echo "Building Java project..."
-                echo "Listing workspace contents:"
-                ls
+            sh '''
+            echo "Building Java project..."
+            echo "Listing workspace contents:"
+            ls
 
-                cd "Password Protection"
+            cd "Password Protection"
 
-                mkdir -p build
+            mkdir -p build
 
-                javac -d build src/*.java
+            javac -d build src/*.java
 
-                echo "Build successful"
-                '''
-            }
+            echo "Build successful"
+            '''
         }
 
         stage('Test') {
-    steps {
-        sh '''
-        echo "Running JUnit tests for File-Encrypter..."
+            sh '''
+            echo "Running JUnit tests for File-Encrypter..."
 
-        cd "Password Protection"
+            cd "Password Protection"
 
-        # Remove corrupted JUnit jar if present
-        rm -f junit-platform-console-standalone.jar
+            # Remove old/corrupted jar
+            rm -f junit-platform-console-standalone.jar
 
-        echo "Downloading JUnit..."
-        curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
+            echo "Downloading JUnit..."
+            curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
 
-        mkdir -p test-build
+            mkdir -p test-build
 
-        javac -cp junit-platform-console-standalone.jar:build -d test-build test/*.java
+            javac -cp junit-platform-console-standalone.jar:build -d test-build test/*.java
 
-        java -jar junit-platform-console-standalone.jar --class-path build:test-build --scan-class-path
+            java -jar junit-platform-console-standalone.jar --class-path build:test-build --scan-class-path
 
-        echo "JUnit tests executed successfully"
-        '''
-    }
-}
+            echo "JUnit tests executed successfully"
+            '''
+        }
 
         stage('Deploy') {
-            steps {
-                sh '''
-                echo "Deploying (Packaging) File-Encrypter Application..."
+            sh '''
+            echo "Deploying (Packaging) File-Encrypter Application..."
 
-                cd "Password Protection"
+            cd "Password Protection"
 
-                # Create executable artifact (JAR)
-                jar cf FileEncrypter.jar -C build .
+            jar cf FileEncrypter.jar -C build .
 
-                echo "Deployment successful - Artifact ready"
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "Pipeline executed successfully!"
+            echo "Deployment successful - Artifact ready"
+            '''
         }
 
-        failure {
-            echo "Pipeline failed!"
-        }
+        echo "Pipeline executed successfully!"
+
+    } catch (Exception e) {
+        echo "Pipeline failed!"
+        throw e
     }
 }
