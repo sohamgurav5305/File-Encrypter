@@ -22,30 +22,28 @@ pipeline {
         }
 
         stage('Test') {
-            steps {
-                sh '''
-                echo "Running JUnit tests for File-Encrypter..."
+    steps {
+        sh '''
+        echo "Running JUnit tests for File-Encrypter..."
 
-                cd "Password Protection"
+        cd "Password Protection"
 
-                # Download JUnit jar if not already present
-                if [ ! -f junit-platform-console-standalone.jar ]; then
-                    echo "Downloading JUnit..."
-                    curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
-                fi
+        # Remove corrupted JUnit jar if present
+        rm -f junit-platform-console-standalone.jar
 
-                # Compile test files
-                mkdir -p test-build
+        echo "Downloading JUnit..."
+        curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
 
-                javac -cp junit-platform-console-standalone.jar:build -d test-build test/*.java
+        mkdir -p test-build
 
-                # Run JUnit tests
-                java -jar junit-platform-console-standalone.jar --class-path build:test-build --scan-class-path
+        javac -cp junit-platform-console-standalone.jar:build -d test-build test/*.java
 
-                echo "JUnit tests executed successfully"
-                '''
-            }
-        }
+        java -jar junit-platform-console-standalone.jar --class-path build:test-build --scan-class-path
+
+        echo "JUnit tests executed successfully"
+        '''
+    }
+}
 
         stage('Deploy') {
             steps {
